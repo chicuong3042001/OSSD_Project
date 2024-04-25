@@ -1,0 +1,160 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Discover Facebook {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+    <style>
+        tr > td {
+            vertical-align: middle;
+        }
+
+        tr > td:nth-child(3) {
+            text-align: left;
+            white-space: break-spaces;
+        }
+
+        tr > th:not(:nth-child(3)), tr > td:not(:nth-child(3)) {
+            text-align: center !important;
+        }
+    </style>
+{% endblock stylesheets %}
+
+{% block content %}
+
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-12 col-xl-3">
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card shadow border-0 text-center p-0">
+                        {% if fanpage.banner %}
+                            <img src="{{ fanpage.banner }}" style="height: 170px" alt="">
+                        {% else %}
+                            <img src="/assets/img/no-banner.png" style="height: 170px" alt="">
+                        {% endif %}
+                        <div class="card-body">
+                            <img src="{{ fanpage.avatar }}"
+                                 class="avatar-xl rounded-circle mx-auto mb-4" alt="{{ fanpage.name }}"
+                                 style="margin-top: -13rem !important; margin-right: 10rem !important;">
+                            <h4 class="h3">
+                                {{ fanpage.name }}
+                            </h4>
+                            <h5 class="fw-normal">
+                                {{ fanpage.likes }} lượt like
+                            </h5>
+                            <p class="text-gray mb-4">
+                                {{ fanpage.checkins }} lượt check-in
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-9">
+            <div class="card shadow border-0 text-center p-3">
+                <table id="youtube-channel-table" class="table table-centered table-nowrap mb-0 rounded">
+                    <thead class="thead-light">
+                    <tr>
+                        <th class="border-0 rounded-start" style="vertical-align: middle">#</th>
+                        <th class="border-0">Thumbnail</th>
+                        <th class="border-0">Tương tác</th>
+                        <th class="border-0">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <!-- Modal Content -->
+        <div class="modal fade" id="modal-default" tabindex="-1" role="dialog" aria-labelledby="modal-default"
+             aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content" style="width: 1000px">
+                    <div class="modal-header">
+                        <h2 class="h6 modal-title">Xem trước video</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <video id="video-preview" style="width: 100%" controls></video>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link text-gray-600 ms-auto" data-bs-dismiss="modal">Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+    <script>
+      $(document).ready(function() {
+        let table = $('#youtube-channel-table').DataTable({
+          'language': {
+            'sEmptyTable': 'Không có dữ liệu trong bảng',
+            'sInfo': '_START_ - _END_ trên tổng _TOTAL_',
+            'sInfoEmpty': '0 trên tổng 0',
+            'sInfoFiltered': '(trên tổng _MAX_)',
+            'sInfoPostFix': '',
+            'sInfoThousands': ',',
+            'sLengthMenu': 'Hiển thị _MENU_ dòng',
+            'sLoadingRecords': 'Đang tải...',
+            'sProcessing': 'Đang xử lý...',
+            'sSearch': 'Tìm kiếm:',
+            'sZeroRecords': 'Không tìm thấy dòng nào phù hợp'
+          }
+        });
+        table.clear().draw();
+        var listPost = JSON.parse('{{ listPost | escapejs }}');
+        for (let i = 0; i < listPost.length; i++) {
+          let post = listPost[i];
+          var activationButton = `<div style="display: flex; gap: 5px"><button class="btn btn-primary btn-download-${post._postId}" onclick="handleDownloadVideo('${post._postId}','${post._linkVideo}')"><div class="spinner-border text-light text-loading-${post._postId}" style="width: 1rem !important; height: 1rem !important; display: none"> <span class="sr-only"></span> </div><span class="text-download-${post._postId}">Tải video</span></button> <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modal-default" onclick="previewVideo('${post._linkVideo}')">Xem trước</button></div>`;
+          var reaction = `<div style="display: flex; flex-direction: column; text-align: left"><p>Lượt like: ${post._likes}</p> <p>Lượt comment: ${post._comments}</p></div>`;
+          table.row.add([
+            i + 1,
+            `<img src=${post._thumbnail} style="width: 150px !important; max-width: none" />`,
+            reaction,
+            activationButton
+          ]).draw();
+        }
+      });
+
+      function handleDownloadVideo(postId, link) {
+        $(`.text-loading-${postId}`).css('display', 'block')
+        $(`.text-download-${postId}`).css('display', 'none')
+        $(`.btn-download-${postId}`).attr('disabled', 'disabled');
+        let xhr = new XMLHttpRequest();
+        xhr.open('GET', link, true);
+        xhr.responseType = 'blob';
+        xhr.onload = function() {
+          let urlCreator = window.URL || window.webkitURL;
+          let downloadUrl = urlCreator.createObjectURL(this.response);
+          let downloadBtn = document.createElement('a');
+          downloadBtn.href = downloadUrl;
+          downloadBtn.target = '_blank';
+          let time = new Date().getTime();
+          downloadBtn.download = `${time}.mp4`;
+          downloadBtn.click();
+          downloadBtn.remove();
+          $(`.text-loading-${postId}`).css('display', 'none')
+          $(`.text-download-${postId}`).css('display', 'block')
+          $(`.btn-download-${postId}`).removeAttr('disabled');
+        };
+        xhr.send();
+      }
+
+      function previewVideo(linkVideo) {
+        let video = document.getElementById('video-preview');
+        video.src = linkVideo;
+      }
+    </script>
+{% endblock javascripts %}

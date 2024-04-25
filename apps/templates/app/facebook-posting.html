@@ -1,0 +1,359 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Dashboard {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+    <style>
+        .custom-file-wrp {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .filename {
+            background: #fff;
+            padding: 7px 15px;
+            border: 1px solid #ddd;
+            width: 300px;
+            margin-right: 15px;
+            color: #999;
+        }
+
+        .custom-file input[type="file"] {
+            display: none;
+        }
+    </style>
+{% endblock stylesheets %}
+
+{% block content %}
+    {% csrf_token %}
+    {# List fanpage #}
+    <div class="card border-0 shadow mb-4">
+        <div class="card-header d-sm-flex flex-row align-items-center flex-0 justify-content-between">
+            <h2 class="fs-5 fw-bold mb-0">Danh sách fanpage</h2>
+            <form method="post" action="" style="visibility: hidden">
+                <button class="btn btn-secondary" type="submit" name="form_type" value="fanpage_scanning">
+                    Quét fanpage
+                </button>
+            </form>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-centered table-nowrap mb-0 rounded" id="fanpage_table">
+                    <thead class="thead-light">
+                    <tr>
+                        <th class="border-0 rounded-start" style="vertical-align: middle">#</th>
+                        <th class="border-0">
+                            <div class="form-check"><input class="form-check-input"
+                                                           style="width: 15.75px; height: 15.75px" type="checkbox"
+                                                           value="" id="checkall"></div>
+                        </th>
+                        <th class="border-0">Tên fanpage</th>
+                        <th class="border-0">ID fanpage</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow mb-4">
+        <div class="card-header d-sm-flex flex-row align-items-center flex-0 justify-content-between">
+            <h2 class="fs-5 fw-bold mb-0">Đăng bài</h2>
+        </div>
+        <div class="card-body">
+            <div>
+                <label for="textarea">Nội dung caption</label>
+                <textarea class="form-control" name="caption" id="textarea"
+                          rows="8"></textarea>
+            </div>
+            <div class="d-flex align-items-center justify-content-between mt-3">
+                <div>
+                    <div class="custom-file-wrp">
+                        <div class="filename" readonly="readonly">
+                            Chọn video đăng bài
+                        </div>
+                        <div class="custom-file">
+                            <label for="videoFileInput" class="btn btn-success" style="margin-bottom: 0; color: white">
+                                <svg class="icon icon-xs" viewBox="0 0 24 24" fill="none"
+                                     xmlns="http://www.w3.org/2000/svg">
+                                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                                    <g id="SVGRepo_iconCarrier">
+                                        <path d="M13.5 3H12H8C6.34315 3 5 4.34315 5 6V18C5 19.6569 6.34315 21 8 21H11M13.5 3L19 8.625M13.5 3V7.625C13.5 8.17728 13.9477 8.625 14.5 8.625H19M19 8.625V11.8125"
+                                              stroke="#ffffff" stroke-width="2" stroke-linecap="round"
+                                              stroke-linejoin="round"></path>
+                                        <path d="M17 15V18M17 21V18M17 18H14M17 18H20" stroke="#ffffff" stroke-width="2"
+                                              stroke-linecap="round" stroke-linejoin="round"></path>
+                                    </g>
+                                </svg>
+                                <span style="margin-top: 2px; margin-left: 5px">Chọn video</span>
+                            </label>
+                            <input type="file" id="videoFileInput" accept="video/mp4">
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" type="button" id="post-btn">
+                    Đăng bài
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow mb-4">
+        <div class="card-header d-sm-flex flex-row align-items-center flex-0 justify-content-between">
+            <h2 class="fs-5 fw-bold mb-0">Lịch sử đăng bài</h2>
+        </div>
+        <div class="card-body">
+            <div>
+                <textarea class="form-control" name="posted-history" id="posted-history" rows="8" readonly
+                          style="resize: none"></textarea>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+    <script>
+        class Fanpage {
+            fanpageId;
+            checked;
+            avatar;
+            name;
+
+            constructor() {
+                this.fanpageId = '';
+                this.checked = false;
+                this.avatar = '';
+                this.name = '';
+            }
+        }
+    </script>
+    <script>
+        let facebook = JSON.parse('{{ facebook | safe }}')[0].fields;
+        let list_fanpage = JSON.parse('{{ list_fanpage | safe }}');
+        // Khởi tạo một jQuery object rỗng để chứa nội dung của tbody
+        let tbodyContent = $();
+        let listFanpagePost = [];
+        for (let i = 0; i < list_fanpage.length; i++) {
+            let fanpageData = list_fanpage[i].fields;
+            let fanpage = new Fanpage();
+            fanpage.name = fanpageData.name;
+            fanpage.checked = false;
+            fanpage.avatar = fanpageData.avatar;
+            fanpage.fanpageId = fanpageData.fanpage_id;
+            listFanpagePost.push(fanpage);
+            let fanpageRow = `<tr>
+                            <td style="vertical-align: middle"><a class="text-primary fw-bold"
+                                                                  style="pointer-events: none">${i + 1}</a>
+                            </td>
+                            <td style="vertical-align: middle">
+                                <div class="form-check">
+                                    <input class="form-check-input fanpage-check" type="checkbox" value="" name="fanpage-check-${fanpageData.fanpage_id}" onclick="check('${fanpage.fanpageId}')">
+                                </div>
+                            </td>
+                            <td class="fw-bold" style="vertical-align: middle">
+                                <div class="d-flex align-items-center">
+                                    <img style="border-radius: 50%; width: 50px; height: 50px; margin: 8px;"
+                                         src="${fanpageData.avatar}">
+                                    <span>${fanpageData.name}</span>
+                                </div>
+
+                            </td>
+                            <td style="vertical-align: middle">${fanpageData.fanpage_id}</td>
+                        </tr>`;
+            // Tạo một jQuery object từ chuỗi HTML của fanpageRow và thêm vào tbodyContent
+            tbodyContent = tbodyContent.add($(fanpageRow));
+        }
+
+        // Chọn thẻ tbody và thêm nội dung vào
+        $('tbody').append(tbodyContent);
+
+        function check(fanpageId) {
+            listFanpagePost.filter(fanpagePost => {
+                if (fanpagePost.fanpageId === fanpageId) {
+                    if (fanpagePost.checked) {
+                        fanpagePost.checked = false;
+                    } else {
+                        fanpagePost.checked = true;
+                    }
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            $('#checkall').change(function() {
+                if ($(this).is(':checked')) {
+                    // Nếu checkbox được kiểm tra
+                    listFanpagePost.map(fanpagePost => {
+                        fanpagePost.checked = true;
+                    });
+                } else {
+                    // Nếu checkbox không được kiểm tra
+                    listFanpagePost.map(fanpagePost => {
+                        fanpagePost.checked = false;
+                    });
+                }
+            });
+        });
+
+        $('#checkall').click(function() {
+            // If it's checked, check all checkboxes in table, else uncheck all
+            $('.fanpage-check').prop('checked', this.checked);
+        });
+
+        function success(fanpageName) {
+            Toastify({
+                text: `Đã đăng bài lên fanpage ${fanpageName}.`,
+                duration: 3000,
+                newWindow: true,
+                close: true,
+                gravity: 'top', // `top` or `bottom`
+                position: 'right', // `left`, `center` or `right`
+                stopOnFocus: true, // Prevents dismissing of toast on hover
+                style: {
+                    background: 'linear-gradient(to right, #00b09b, #96c93d)'
+                }
+            }).showToast();
+        }
+    </script>
+
+    <!-- Đăng bài -->
+    <script>
+        class PostUpload {
+            constructor() {
+                this.fileInfo = null;
+                this.fanpage = null;
+                this.discription = '';
+                this.facebook = null;
+            }
+        }
+
+        class FileInfo {
+            constructor() {
+                this.fileName = '';
+                this.path = '';
+                this.videoStream = '';
+                this.size = 0;
+            }
+        }
+
+        class FacebookInitData {
+            constructor() {
+                this.fbdtsg = '';
+                this.revision = '';
+                this.jazoest = '';
+                this.dyn = '1KQdAmm1gxu4U4ifGh28sBBgS5UqxKcwRwAxu3-UcodUbE6u7HzE24xm6Uhx61rxicwcW4o29wmU1a852q3q5U2nwvE6W786q5Esx26UhwWwnElzaw5KzHzoaUae1AwgE5y6E52229wcq1FwKCwyxe';
+            }
+        }
+
+        $(function() {
+            $('#videoFileInput').change(function(event) {
+                var x = event.target.files[0].name;
+                $('.filename').text(x);
+            });
+        });
+
+        $(document).ready(function() {
+            $('#post-btn').click(async function() {
+                let listFanpageChecked = listFanpagePost.filter(fanpagePost => {
+                    return fanpagePost.checked;
+                });
+                if (listFanpageChecked.length === 0) {
+                    SweetAlert.fire({
+                        title: "Cảnh báo",
+                        html: "Vui lòng chọn Fanpage cần đăng.",
+                        icon: "warning"
+                    })
+                    return;
+                }
+                let postUpload = new PostUpload();
+                postUpload.discription = $('#textarea').val().trim();
+                postUpload.facebook = facebook;
+                let fileInput = $('#videoFileInput')[0]; // Get the file input element
+                let file = fileInput.files[0]; // Get the first selected file
+
+                // Check if a file is selected
+                if (!file) {
+                    SweetAlert.fire({
+                        title: "Cảnh báo",
+                        html: "Vui lòng chọn video cần đăng.",
+                        icon: "warning"
+                    })
+                    return;
+                }
+
+                // Create a FileInfo object
+                let fileInfo = new FileInfo();
+                // Set file name
+                fileInfo.fileName = file.name;
+                // Set file path (if supported by the browser, may not work in all browsers)
+                fileInfo.path = file.webkitRelativePath || file.mozFullPath || file.name;
+                fileInfo.size = file.size;
+                // Read file contents
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Assuming you want to store the video stream as base64 encoded data
+                    fileInfo.videoStream = e.target.result;
+                };
+                // Read the file as data URL (base64 encoded)
+                reader.readAsDataURL(file);
+                postUpload.fileInfo = fileInfo;
+                let csrftoken = jQuery('[name=csrfmiddlewaretoken]').val();
+                // Đăng bài
+
+                var formData = new FormData();
+                formData.append('videoFile', file);
+                formData.append('description', $('#textarea').val().trim());
+                let responseData = '';
+                Swal.fire({
+                    title: 'Đăng bài Facebook',
+                    html: 'Đang tiến hành đăng bài viết lên các Fanpage.',
+                    heightAuto: false,
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    willOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                for (let i = 0; i < listFanpageChecked.length; i++) {
+                    let fanpage = listFanpageChecked[i];
+                    formData.append('fanpageId', fanpage.fanpageId);
+                    $.ajax({
+                        url: '/upload-video',  // Đặt URL của view xử lý upload ở đây
+                        headers: { 'X-CSRFToken': csrftoken },
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            success(fanpage.name);
+                            responseData += `Link bài đăng của fanpage ${fanpage.name}: ` + response + '\n';
+                            // Ghi dữ liệu từ API vào textarea
+                            $('#posted-history').val(responseData);
+                            if (i + 1 === listFanpageChecked.length) {
+                                Swal.fire({
+                                    title: 'Đăng bài Facebook',
+                                    html: 'Đã đăng bài lên các Fanpage',
+                                    icon: 'success'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            alert('Đã xảy ra lỗi: ' + error);
+                        }
+                    });
+                }
+            });
+        });
+
+    </script>
+
+{% endblock javascripts %}

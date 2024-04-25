@@ -1,0 +1,304 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Bookmark {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+    <style>
+        tr > td {
+            vertical-align: middle;
+        }
+    </style>
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="row">
+        <div class="card border-0 shadow mb-4">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="nav-youtube-search">
+                        <div class="d-flex align-items-center justify-content-between" style="width: 420px">
+                            <h4 class="h6 mb-0">
+                                Danh sách Fanpage
+                            </h4>
+                        </div>
+                    </div>
+
+                    <div class="nav-search" style="visibility: hidden">
+                        <input class="form-control mr-sm-2" type="text" placeholder="Tìm kiếm..." aria-label="Search">
+                    </div>
+                </div>
+
+                <div class="table-responsive mt-3">
+                    {% csrf_token %}
+                    <table id="fanpage-table" class="table table-centered table-nowrap mb-0 rounded">
+                        <thead class="thead-light">
+                        <tr>
+                            <th class="border-0 rounded-start" style="vertical-align: middle">#</th>
+                            <th class="border-0">Tên Fanpage</th>
+                            <th class="border-0">Page ID</th>
+                            <th class="border-0">Tương tác</th>
+                            <th class="border-0">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row">
+        <div class="card border-0 shadow mb-4">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="nav-youtube-search">
+                        <div class="d-flex align-items-center justify-content-between" style="width: 420px">
+                            <h4 class="h6 mb-0">
+                                Danh sách kênh Youtube
+                            </h4>
+                        </div>
+                    </div>
+
+                    <div class="nav-search" style="visibility: hidden">
+                        <input class="form-control mr-sm-2" type="text" placeholder="Tìm kiếm..." aria-label="Search">
+                    </div>
+                </div>
+
+                <div class="table-responsive mt-3">
+                    {% csrf_token %}
+                    <table id="youtube-channel-table" class="table table-centered table-nowrap mb-0 rounded">
+                        <thead class="thead-light">
+                        <tr>
+                            <th class="border-0 rounded-start" style="vertical-align: middle">#</th>
+                            <th class="border-0">Tên kênh</th>
+                            <th class="border-0">Lượt xem</th>
+                            <th class="border-0">Lượt đăng ký</th>
+                            <th class="border-0">Ngày tham gia</th>
+                            <th class="border-0">Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+    <script src="../../static/assets/js/Fanpage.js"></script>
+    <script>
+      let fanpageTable = $('#fanpage-table').DataTable({
+        'language': {
+          'sEmptyTable': 'Không có dữ liệu trong bảng',
+          'sInfo': '_START_ - _END_ trên tổng _TOTAL_',
+          'sInfoEmpty': '0 trên tổng 0',
+          'sInfoFiltered': '(trên tổng _MAX_)',
+          'sInfoPostFix': '',
+          'sInfoThousands': ',',
+          'sLengthMenu': 'Hiển thị _MENU_ dòng',
+          'sLoadingRecords': 'Đang tải...',
+          'sProcessing': 'Đang xử lý...',
+          'sSearch': 'Tìm kiếm:',
+          'sZeroRecords': 'Không tìm thấy dòng nào phù hợp'
+        }
+      });
+    </script>
+
+    <script src="../../static/assets/js/YoutubeChannel.js"></script>
+    <script>
+      let youtubeTable = $('#youtube-channel-table').DataTable({
+        'language': {
+          'sEmptyTable': 'Không có dữ liệu trong bảng',
+          'sInfo': '_START_ - _END_ trên tổng _TOTAL_',
+          'sInfoEmpty': '0 trên tổng 0',
+          'sInfoFiltered': '(trên tổng _MAX_)',
+          'sInfoPostFix': '',
+          'sInfoThousands': ',',
+          'sLengthMenu': 'Hiển thị _MENU_ dòng',
+          'sLoadingRecords': 'Đang tải...',
+          'sProcessing': 'Đang xử lý...',
+          'sSearch': 'Tìm kiếm:',
+          'sZeroRecords': 'Không tìm thấy dòng nào phù hợp'
+        }
+      });
+    </script>
+
+    <!-- get data -->
+    <script>
+      $(document).ready(function() {
+        $.ajax({
+          url: '/get-list-bookmark-fanpage',
+          method: 'GET',
+
+          success: function(data) {
+            let listDataFanpage = JSON.parse(data);
+            let listFanpage = [];
+            let index = 1;
+            for (let key in listDataFanpage) {
+              let fanpageData = listDataFanpage[key];
+              let fanpage = new Fanpage();
+              fanpage.index = index;
+              fanpage.name = fanpageData['fields'].name;
+              fanpage.fanpageId = fanpageData['fields'].fanpage_id;
+              fanpage.likes = fanpageData['fields'].likes;
+              fanpage.checkins = fanpageData['fields'].checkins;
+              fanpage.banner = fanpageData['fields'].banner;
+              fanpage.avatar = `${"https://graph.facebook.com/" + fanpage.fanpageId + "/picture?height=500&width=500&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662"}`
+              listFanpage.push(fanpage);
+              index++;
+            }
+
+            fanpageTable.clear().draw();
+            $.each(listFanpage, function(index, fanpage) {
+              console.log(fanpage);
+              let nameHTML = '<img src="' + fanpage.avatar + '" alt="' + fanpage.name + '" style="width: 50px; height: auto;"> ' + fanpage.name;
+              var reaction = `<div style="display: flex; flex-direction: column; text-align: left"><p>Lượt like: ${fanpage.likes}</p> <p>Lượt check-in: ${fanpage.checkins}</p></p></div>`;
+
+              let activationButton = `<button class="btn btn-primary" onclick="unfavoriteFanpage('${encodeURIComponent(JSON.stringify(fanpage))}')">Bỏ yêu thích</button> <button class="btn btn-danger" onclick="discoverFanpage('${encodeURIComponent(JSON.stringify(fanpage))}')">Quét video</button>`;
+              fanpageTable.row.add([
+                fanpage.index,
+                nameHTML,
+                fanpage.fanpageId,
+                reaction,
+                activationButton
+              ]).draw();
+            });
+          },
+          error: function(xhr, status, error) {
+
+          }
+        });
+
+        $.ajax({
+          url: '/get-list-bookmark-youtube-channel',
+          method: 'GET',
+          success: function(data) {
+            let listDataYoutubeChannel = JSON.parse(data);
+            let listYoutubeChannel = [];
+            let index = 1;
+            for (let key in listDataYoutubeChannel) {
+              let youtubeData = listDataYoutubeChannel[key];
+              let youtubeChannel = new YoutubeChannel();
+              youtubeChannel.index = index;
+              youtubeChannel.channelId = youtubeData['fields'].channel_id;
+              youtubeChannel.name = youtubeData['fields'].name;
+              youtubeChannel.publishedAt = youtubeData['fields'].published_at;
+              youtubeChannel.thumbnail = youtubeData['fields'].thumbnail;
+              youtubeChannel.banner = youtubeData['fields']?.banner ?? '';
+              youtubeChannel.playlistId = youtubeData['fields']?.playlist_id;
+              youtubeChannel.viewCount = youtubeData['fields'].view_count;
+              youtubeChannel.subscriberCount = youtubeData['fields'].subscribe_count;
+              listYoutubeChannel.push(youtubeChannel);
+              index++;
+            }
+
+            youtubeTable.clear().draw();
+            $.each(listYoutubeChannel, function(index, channel) {
+              let nameHTML = '<img src="' + channel.thumbnail + '" alt="' + channel.name + '" style="width: 50px; height: auto;"> ' + channel.name;
+
+              let ngay = new Date(channel.publishedAt);
+
+              let ngayOfMonth = ngay.getDate();
+              let thang = ngay.getMonth() + 1; // Tháng bắt đầu từ 0, cần cộng thêm 1
+              let nam = ngay.getFullYear();
+
+              let publishedAt = ngayOfMonth.toString().padStart(2, '0') + '/' + thang.toString().padStart(2, '0') + '/' + nam;
+              let activationButton = `<button class="btn btn-primary" onclick="unfavoriteChannel('${encodeURIComponent(JSON.stringify(channel))}')">Bỏ yêu thích</button> <button class="btn btn-danger" onclick="discoverChannel('${encodeURIComponent(JSON.stringify(channel))}')">Quét video</button>`;
+              youtubeTable.row.add([
+                channel.index,
+                nameHTML,
+                channel.viewCount,
+                channel.subscriberCount,
+                publishedAt,
+                activationButton
+              ]).draw();
+            });
+
+          },
+          error: function(xhr, status, error) {
+
+          }
+        });
+      });
+    </script>
+
+    <!-- unfavorite -->
+    <script>
+      function unfavoriteChannel(channel) {
+        let youtubeChannel = decodeURIComponent(channel);
+        let csrftoken = jQuery('[name=csrfmiddlewaretoken]').val();
+        $(document).ready(function() {
+          $.ajax({
+            url: '/unfavorite-channel',
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrftoken },
+            data: JSON.stringify(youtubeChannel),
+            success: function(data) {
+              Swal.fire({
+                title: 'thành công',
+                text: data,
+                icon: 'success'
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  location.reload(); // Load lại trang
+                }
+              });
+            },
+            error: function(data) {
+
+            }
+          });
+        });
+      }
+
+      function unfavoriteFanpage(fanpageData) {
+        let fanpage = decodeURIComponent(fanpageData);
+        let csrftoken = jQuery('[name=csrfmiddlewaretoken]').val();
+        $(document).ready(function() {
+          $.ajax({
+            url: '/unfavorite-fanpage',
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrftoken },
+            data: JSON.stringify(fanpage),
+            success: function(data) {
+              Swal.fire({
+                title: 'thành công',
+                text: data,
+                icon: 'success'
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  location.reload(); // Load lại trang
+                }
+              });
+            },
+            error: function(data) {
+
+            }
+          });
+        });
+      }
+    </script>
+
+    <!-- discover -->
+    <script>
+      function discoverChannel(channel) {
+        let youtubeChannel = JSON.parse(decodeURIComponent(channel));
+        window.location.href = "{% url 'discover-youtube' %}?channel=" + encodeURIComponent(JSON.stringify(youtubeChannel));
+      }
+      
+      function discoverFanpage(fanpageData) {
+        let fanpage = JSON.parse(decodeURIComponent(fanpageData));
+        window.location.href = "{% url 'discover-facebook' %}?fanpage=" + encodeURIComponent(JSON.stringify(fanpage));
+      }
+    </script>
+{% endblock javascripts %}

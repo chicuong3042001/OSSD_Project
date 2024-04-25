@@ -1,0 +1,193 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Youtube Searching {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+    <style>
+        tr > td {
+            vertical-align: middle;
+        }
+    </style>
+{% endblock stylesheets %}
+
+{% block content %}
+
+    <div class="card border-0 shadow mb-4">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="nav-youtube-search">
+                    <div class="d-flex align-items-center justify-content-between" style="width: 420px">
+                        <input id="keyword" class="form-control mr-sm-2" type="text"
+                               placeholder="Nhập từ khóa quét kênh Youtube"
+                               aria-label="Search">
+                        <button id="button-search" class="btn btn-secondary w-50" style="margin-left: 10px"
+                                type="button">Tìm kiếm
+                        </button>
+                    </div>
+                </div>
+
+                <div class="nav-search" style="visibility: hidden">
+                    <input class="form-control mr-sm-2" type="text" placeholder="Tìm kiếm..." aria-label="Search">
+                </div>
+            </div>
+
+            <div class="table-responsive mt-3">
+                {% csrf_token %}
+                <table id="youtube-channel-table" class="table table-centered table-nowrap mb-0 rounded">
+                    <thead class="thead-light">
+                    <tr>
+                        <th class="border-0 rounded-start" style="vertical-align: middle">#</th>
+                        <th class="border-0">Tên kênh</th>
+                        <th class="border-0">Lượt xem</th>
+                        <th class="border-0">Lượt đăng ký</th>
+                        <th class="border-0">Ngày tham gia</th>
+                        <th class="border-0">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+    <script src="../../static/assets/js/YoutubeChannel.js"></script>
+    <script>
+      let table = $('#youtube-channel-table').DataTable({
+        'language': {
+          'sEmptyTable': 'Không có dữ liệu trong bảng',
+          'sInfo': '_START_ - _END_ trên tổng _TOTAL_',
+          'sInfoEmpty': '0 trên tổng 0',
+          'sInfoFiltered': '(trên tổng _MAX_)',
+          'sInfoPostFix': '',
+          'sInfoThousands': ',',
+          'sLengthMenu': 'Hiển thị _MENU_ dòng',
+          'sLoadingRecords': 'Đang tải...',
+          'sProcessing': 'Đang xử lý...',
+          'sSearch': 'Tìm kiếm:',
+          'sZeroRecords': 'Không tìm thấy dòng nào phù hợp'
+        }
+      });
+
+      function mapDataChannelYoutube(dataListYoutubeChannel) {
+        let listYoutubeChannel = [];
+        for (let i = 0; i < dataListYoutubeChannel.length; i++) {
+          let dataYoutubeChannel = dataListYoutubeChannel[i];
+          let youtubeChannel = new YoutubeChannel();
+          youtubeChannel.index = i;
+          youtubeChannel.channelId = dataYoutubeChannel.id;
+          youtubeChannel.name = dataYoutubeChannel.snippet.title;
+          youtubeChannel.publishedAt = dataYoutubeChannel.snippet.publishedAt;
+          youtubeChannel.thumbnail = dataYoutubeChannel.snippet.thumbnails.medium.url;
+          youtubeChannel.banner = dataYoutubeChannel?.brandingSettings?.image?.bannerExternalUrl ?? '';
+          youtubeChannel.playlistId = dataYoutubeChannel.contentDetails.relatedPlaylists.uploads;
+          youtubeChannel.viewCount = Number(dataYoutubeChannel.statistics.viewCount) ? Number(dataYoutubeChannel.statistics.viewCount) : 0;
+          youtubeChannel.subscriberCount = Number(dataYoutubeChannel.statistics.subscriberCount) ? Number(dataYoutubeChannel.statistics.subscriberCount) : 0;
+
+          listYoutubeChannel.push(youtubeChannel);
+        }
+
+        return listYoutubeChannel;
+      }
+
+      $(document).ready(function() {
+        $('#button-search').click(function() {
+          let keyword = $('#keyword').val();
+          if (keyword.trim() === '') {
+            Swal.fire({
+              title: 'Cảnh báo',
+              text: 'Vui lòng nhập từ khóa kênh Youtube cần quét !',
+              icon: 'warning'
+            });
+            return;
+          }
+          Swal.fire({
+            title: 'Quét kênh Youtube',
+            html: 'Đang tiến hành quét kênh Youtube.',
+            heightAuto: false,
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            willOpen: () => {
+              Swal.showLoading();
+            }
+          });
+          $.ajax({
+            url: '/scan-youtube-channel',
+            method: 'GET',
+            data: { keyword: keyword }, // Truyền từ khóa vào yêu cầu GET
+            success: function(data) {
+              let listYoutubeChannel = mapDataChannelYoutube(data.items);
+              table.clear().draw();
+              $.each(listYoutubeChannel, function(index, channel) {
+                let nameHTML = '<img src="' + channel.thumbnail + '" alt="' + channel.name + '" style="width: 50px; height: auto;"> ' + channel.name;
+
+                let ngay = new Date(channel.publishedAt);
+
+                let ngayOfMonth = ngay.getDate();
+                let thang = ngay.getMonth() + 1; // Tháng bắt đầu từ 0, cần cộng thêm 1
+                let nam = ngay.getFullYear();
+
+                let publishedAt = ngayOfMonth.toString().padStart(2, '0') + '/' + thang.toString().padStart(2, '0') + '/' + nam;
+                let activationButton = `<button class="btn btn-primary" onclick="favoriteChannel('${encodeURIComponent(JSON.stringify(channel))}')">Yêu thích</button> <button class="btn btn-danger" onclick="discoverChannel('${encodeURIComponent(JSON.stringify(channel))}')">Quét video</button>`;
+                table.row.add([
+                  channel.index + 1,
+                  nameHTML,
+                  channel.viewCount,
+                  channel.subscriberCount,
+                  publishedAt,
+                  activationButton
+                ]).draw();
+              });
+              Swal.fire({
+                title: 'Quét kênh Youtube',
+                html: 'Đã quét xong các kênh Youtube',
+                icon: 'success'
+              });
+            },
+            error: function(xhr, status, error) {
+              Swal.fire({
+                title: 'Thất bại',
+                text: 'Xảy ra lỗi khi quét kênh Youtube !',
+                icon: 'error'
+              });
+            }
+          });
+        });
+      });
+
+      function favoriteChannel(channel) {
+        let youtubeChannel = decodeURIComponent(channel);
+        let csrftoken = jQuery('[name=csrfmiddlewaretoken]').val();
+        $(document).ready(function() {
+          $.ajax({
+            url: '/favorite-channel',
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrftoken },
+            data: JSON.stringify(youtubeChannel),
+            success: function(data) {
+              Swal.fire({
+                title: 'thành công',
+                text: data,
+                icon: 'success'
+              });
+            },
+            error: function(data) {
+
+            }
+          });
+        });
+      }
+
+      function discoverChannel(channel) {
+        let youtubeChannel = JSON.parse(decodeURIComponent(channel));
+        window.location.href = "{% url 'discover-youtube' %}?channel=" + encodeURIComponent(JSON.stringify(youtubeChannel));
+      }
+    </script>
+{% endblock javascripts %}

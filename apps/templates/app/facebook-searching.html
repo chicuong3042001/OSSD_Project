@@ -1,0 +1,181 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Dashboard {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+    <style>
+        tr > td {
+            vertical-align: middle;
+        }
+    </style>
+{% endblock stylesheets %}
+
+{% block content %}
+
+    <div class="card border-0 shadow mb-4">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="nav-youtube-search">
+                    <div class="d-flex align-items-center justify-content-between" style="width: 420px">
+                        <input id="keyword" class="form-control mr-sm-2" type="text"
+                               placeholder="Nhập từ khóa quét Fanpage"
+                               aria-label="Search">
+                        <button id="button-search" class="btn btn-secondary w-50" style="margin-left: 10px"
+                                type="button">Tìm kiếm
+                        </button>
+                    </div>
+                </div>
+
+                <div class="nav-search" style="visibility: hidden">
+                    <input class="form-control mr-sm-2" type="text" placeholder="Tìm kiếm..." aria-label="Search">
+                </div>
+            </div>
+
+            <div class="table-responsive mt-3">
+                {% csrf_token %}
+                <table id="fanpage-table" class="table table-centered table-nowrap mb-0 rounded">
+                    <thead class="thead-light">
+                    <tr>
+                        <th class="border-0 rounded-start" style="vertical-align: middle">#</th>
+                        <th class="border-0">Tên Fanpage</th>
+                        <th class="border-0">Page ID</th>
+                        <th class="border-0">Tương tác</th>
+                        <th class="border-0">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+    <script src="../../static/assets/js/Fanpage.js"></script>
+    <script>
+      let table = $('#fanpage-table').DataTable({
+        'language': {
+          'sEmptyTable': 'Không có dữ liệu trong bảng',
+          'sInfo': '_START_ - _END_ trên tổng _TOTAL_',
+          'sInfoEmpty': '0 trên tổng 0',
+          'sInfoFiltered': '(trên tổng _MAX_)',
+          'sInfoPostFix': '',
+          'sInfoThousands': ',',
+          'sLengthMenu': 'Hiển thị _MENU_ dòng',
+          'sLoadingRecords': 'Đang tải...',
+          'sProcessing': 'Đang xử lý...',
+          'sSearch': 'Tìm kiếm:',
+          'sZeroRecords': 'Không tìm thấy dòng nào phù hợp'
+        }
+      });
+
+      $(document).ready(function() {
+        $('#button-search').click(function() {
+          let keyword = $('#keyword').val();
+          if (keyword.trim() === '') {
+            Swal.fire({
+              title: 'Cảnh báo',
+              text: 'Vui lòng nhập từ khóa Fanpage cần quét !',
+              icon: 'warning'
+            });
+            return;
+          }
+          Swal.fire({
+            title: 'Quét Fanpage',
+            html: 'Đang tiến hành quét Fanpage.',
+            heightAuto: false,
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            willOpen: () => {
+              Swal.showLoading();
+            }
+          });
+          $.ajax({
+            url: '/scan-fanpage-info',
+            method: 'GET',
+            data: { keyword: keyword }, // Truyền từ khóa vào yêu cầu GET
+            success: function(data) {
+              let listDataFanpage = JSON.parse(JSON.parse(data)[1].body);
+              let listFanpage = [];
+              let index = 1;
+              for (let key in listDataFanpage) {
+                let fanpageData = listDataFanpage[key];
+                let fanpage = new Fanpage();
+                fanpage.index = index;
+                fanpage.name = fanpageData.name;
+                fanpage.fanpageId = fanpageData.id;
+                fanpage.likes = fanpageData.likes;
+                fanpage.checkins = fanpageData.checkins;
+                fanpage.banner = fanpageData?.cover?.source ?? '';
+                fanpage.avatar = `https://graph.facebook.com/${fanpageData.id}/picture?height=500&width=500&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`
+                listFanpage.push(fanpage);
+                index++;
+              }
+
+              table.clear().draw();
+              $.each(listFanpage, function(index, fanpage) {
+                let nameHTML = '<img src="' + fanpage.avatar + '" alt="' + fanpage.name + '" style="width: 50px; height: auto;"> ' + fanpage.name;
+                var reaction = `<div style="display: flex; flex-direction: column; text-align: left"><p>Lượt like: ${fanpage.likes}</p> <p>Lượt check-in: ${fanpage.checkins}</p></p></div>`;
+
+                let activationButton = `<button class="btn btn-primary" onclick="favoriteFanpage('${encodeURIComponent(JSON.stringify(fanpage))}')">Yêu thích</button> <button class="btn btn-danger" onclick="discoverFanpage('${encodeURIComponent(JSON.stringify(fanpage))}')">Quét video</button>`;
+                table.row.add([
+                  fanpage.index,
+                  nameHTML,
+                  fanpage.fanpageId,
+                  reaction,
+                  activationButton
+                ]).draw();
+              });
+
+              Swal.fire({
+                title: 'Quét Fanpage',
+                html: 'Đã quét xong các Fanpage',
+                icon: 'success'
+              });
+            },
+            error: function(xhr, status, error) {
+              Swal.fire({
+                title: 'Thất bại',
+                text: 'Xảy ra lỗi khi quét Fanpage !',
+                icon: 'error'
+              });
+            }
+          });
+        });
+      });
+
+      function favoriteFanpage(fanpageData) {
+        let fanpage = decodeURIComponent(fanpageData);
+        let csrftoken = jQuery('[name=csrfmiddlewaretoken]').val();
+        $(document).ready(function() {
+          $.ajax({
+            url: '/favorite-fanpage',
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrftoken },
+            data: JSON.stringify(fanpage),
+            success: function(data) {
+              Swal.fire({
+                title: 'thành công',
+                text: data,
+                icon: 'success'
+              });
+            },
+            error: function(data) {
+
+            }
+          });
+        });
+      }
+
+      function discoverFanpage(fanpageData) {
+        let fanpage = JSON.parse(decodeURIComponent(fanpageData));
+        window.location.href = "{% url 'discover-facebook' %}?fanpage=" + encodeURIComponent(JSON.stringify(fanpage));
+      }
+    </script>
+{% endblock javascripts %}

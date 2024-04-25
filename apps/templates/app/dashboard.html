@@ -1,0 +1,141 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Dashboard {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+    {# Account Info #}
+    <div class="card border-0 shadow mb-4">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between">
+                {% if facebook %}
+                    <div class="align-items-center d-flex justify-content-between" style="width: 300px">
+                        <div class="col-auto">
+                            <!-- Avatar -->
+                            <a href="#" class="avatar" style="pointer-events: none">
+                                <img class="rounded" alt="Image placeholder" style="width: 5rem; height: 5rem"
+                                     src="{{ facebook.avatar }}">
+                            </a>
+                        </div>
+                        <div class="col-auto ms--2">
+                            <h4 class="h6 mb-0">
+                                Tên: {{ facebook.name }}
+                            </h4>
+                            <h4 class="h6 mb-0">
+                                UID: {{ facebook.facebook_id }}
+                            </h4>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="align-items-center d-flex justify-content-between" style="width: 400px">
+                        <h4 class="h6 mb-0">
+                            Vui lòng thêm tài khoản Facebook để sử dụng
+                        </h4>
+                    </div>
+                {% endif %}
+
+                <div class="align-items-center">
+                    <button data-bs-toggle="modal" data-bs-target="#facebook-login" class="btn btn-secondary"
+                            type="button">
+                        Thêm tài khoản
+                    </button>
+                    <!-- Modal Content -->
+                    <div class="modal fade" id="facebook-login" tabindex="-1" role="dialog"
+                         aria-labelledby="modal-default" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h2 class="h6 modal-title">Thêm tài khoản Facebook</h2>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body mt-2" style="padding: 0 1rem">
+                                    <form method="post" action="">
+                                        {% csrf_token %}
+                                        <div>
+                                            <label for="textarea">Nhập cookie facebook</label>
+                                            <textarea class="form-control" name="facebook_cookie" id="textarea"
+                                                      rows="8"></textarea>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-link text-gray-600 ms-auto"
+                                                    data-bs-dismiss="modal">
+                                                Hủy
+                                            </button>
+                                            <button type="submit" class="btn btn-secondary" name="form_type"
+                                                    value="get_info_login">Thêm
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# List fanpage #}
+    <div class="card border-0 shadow mb-4">
+        <div class="card-header d-sm-flex flex-row align-items-center flex-0 justify-content-between">
+            <h2 class="fs-5 fw-bold mb-0">Danh sách fanpage</h2>
+            <form method="post" action="">
+                {% csrf_token %}
+                <button class="btn btn-secondary" type="submit" name="form_type" value="fanpage_scanning">
+                    Quét fanpage
+                </button>
+            </form>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-centered table-nowrap mb-0 rounded">
+                    <thead class="thead-light">
+                    <tr>
+                        <th class="border-0 rounded-start" style="vertical-align: middle">#</th>
+                        <th class="border-0">Tên fanpage</th>
+                        <th class="border-0">ID fanpage</th>
+                        <th class="border-0">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for fanpage in list_fanpage %}
+                        <tr>
+                            <td style="vertical-align: middle"><a class="text-primary fw-bold"
+                                                                  style="pointer-events: none">{{ forloop.counter }}</a>
+                            </td>
+                            <td class="fw-bold" style="vertical-align: middle">
+                                <div class="d-flex align-items-center">
+                                    <img style="border-radius: 50%; width: 50px; height: 50px; margin: 8px;"
+                                         src="{{ fanpage.avatar }}">
+                                    <span>{{ fanpage.name }}</span>
+                                </div>
+
+                            </td>
+                            <td style="vertical-align: middle">{{ fanpage.fanpage_id }}</td>
+                            <td style="vertical-align: middle">
+                                <button class="btn btn-info" type="button" id="view-fanpage-btn"
+                                        onclick="viewFanpage({{ fanpage.fanpage_id }})">Xem fanpage
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+    <script type="text/javascript">
+      function viewFanpage(fanpage_id) {
+        window.open(`https://www.facebook.com/${fanpage_id}`, '_blank');
+      }
+    </script>
+{% endblock javascripts %}

@@ -1,0 +1,189 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Discover Youtube {% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+    <style>
+        tr > td {
+            vertical-align: middle;
+        }
+
+        tr > td:nth-child(3) {
+            text-align: left;
+            white-space: break-spaces;
+        }
+
+        tr > th:not(:nth-child(3)), tr > td:not(:nth-child(3)) {
+            text-align: center !important;
+        }
+    </style>
+{% endblock stylesheets %}
+
+{% block content %}
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-12 col-xl-3">
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card shadow border-0 text-center p-0">
+                        {% if banner %}
+                            <img src="{{ banner }}" alt="">
+                        {% else %}
+                            <img src="/assets/img/no-banner.png" alt="">
+                        {% endif %}
+                        <div class="card-body">
+                            <img src="{{ thumbnail }}"
+                                 class="avatar-xl rounded-circle mx-auto mb-4" alt="{{ name }}"
+                                 style="margin-top: -13rem !important; margin-right: 10rem !important;">
+                            <h4 class="h3">
+                                {{ name }}
+                            </h4>
+                            <h5 class="fw-normal">
+                                {{ subscriberCount }} lượt đăng ký
+                            </h5>
+                            <p class="text-gray mb-4">
+                                {{ viewsCount }} lượt xem
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-9">
+            <div class="card shadow border-0 text-center p-3">
+                <table id="youtube-channel-table" class="table table-centered table-nowrap mb-0 rounded">
+                    <thead class="thead-light">
+                    <tr>
+                        <th class="border-0 rounded-start" style="vertical-align: middle">#</th>
+                        <th class="border-0">Thumbnail</th>
+                        <th class="border-0">Tiêu đề</th>
+                        <th class="border-0">Tương tác</th>
+                        <th class="border-0">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div>
+        <!-- Modal Content -->
+        <div class="modal fade" id="modal-default" tabindex="-1" role="dialog" aria-labelledby="modal-default"
+             aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content" style="width: 1000px">
+                    <div class="modal-header">
+                        <h2 class="h6 modal-title">Xem trước video</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <iframe width="560" height="315"
+                                id="video-preview"
+                                title="YouTube video player" frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-link text-gray-600 ms-auto" data-bs-dismiss="modal">Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+    <script type="text/javascript">
+      $(document).ready(function() {
+        let table = $('#youtube-channel-table').DataTable({
+          'bAutoWidth': false,
+          'aoColumns': [
+            { 'sWidth': '15px' },
+            { 'sWidth': '180px' },
+            { 'sWidth': '300px' },
+            { 'sWidth': '120px' },
+            null
+          ],
+          'language': {
+            'sEmptyTable': 'Không có dữ liệu trong bảng',
+            'sInfo': '_START_ - _END_ trên tổng _TOTAL_',
+            'sInfoEmpty': '0 trên tổng 0',
+            'sInfoFiltered': '(trên tổng _MAX_)',
+            'sInfoPostFix': '',
+            'sInfoThousands': ',',
+            'sLengthMenu': 'Hiển thị _MENU_ dòng',
+            'sLoadingRecords': 'Đang tải...',
+            'sProcessing': 'Đang xử lý...',
+            'sSearch': 'Tìm kiếm:',
+            'sZeroRecords': 'Không tìm thấy dòng nào phù hợp'
+          }
+        });
+
+        table.clear().draw();
+        {% for video in listVideo %}
+          var video = {{ video | safe }};
+          console.log(video);
+          var activationButton = `<div style="display: flex; gap: 5px"><button class="btn btn-primary btn-download-${video.id}" onclick="downloadVideo('${video.id}')"><div class="spinner-border text-light text-loading-${video.id}" style="width: 1rem !important; height: 1rem !important; display: none"> <span class="sr-only"></span> </div><span class="text-download-${video.id}">Tải video</span></button> <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modal-default" onclick="previewVideo('${video.id}')">Xem trước</button></div>`;
+          var reaction = `<div style="display: flex; flex-direction: column; text-align: left"><p>Lượt view: ${video.statistics.viewCount}</p> <p>Lượt comment: ${video.statistics.commentCount}</p> <p>Lượt like: ${video.statistics.likeCount}</p></div>`
+          table.row.add([
+            {{ forloop.counter }},
+            `<img src=${video.snippet.thumbnails.medium.url} style="width: 150px !important; max-width: none" />`,
+            video.snippet.title,
+            reaction,
+            activationButton
+          ]).draw();
+        {% endfor %}
+
+      });
+
+      function downloadVideo(videoId) {
+        $(document).ready(function() {
+          var url = 'https://www.youtube.com/watch?v=' + videoId;
+          let csrftoken = jQuery('[name=csrfmiddlewaretoken]').val();
+            $(`.text-loading-${videoId}`).css('display', 'block')
+              $(`.text-download-${videoId}`).css('display', 'none')
+              $(`.btn-download-${videoId}`).attr('disabled', 'disabled');
+          $.ajax({
+            type: 'POST',
+            url: '/download-youtube/',
+            headers: { 'X-CSRFToken': csrftoken },
+            data: {
+              'url': url
+            },
+            success: function(response) {
+
+              if (response.success) {
+                var videoUrl = response.video_url;
+                var video_title = response.video_title;
+                var link = document.createElement('a');
+                link.href = videoUrl;
+                link.download = video_title + '.mp4';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                $(`.text-loading-${videoId}`).css('display', 'none')
+              $(`.text-download-${videoId}`).css('display', 'block')
+              $(`.btn-download-${videoId}`).removeAttr('disabled');
+              } else {
+                alert('Failed to download video.');
+              }
+            },
+            error: function(xhr, status, error) {
+              alert('Failed to download video.');
+            }
+          });
+        });
+      }
+
+      function previewVideo(videoId) {
+        let iframe = document.getElementById('video-preview');
+        iframe.src = 'https://www.youtube.com/embed/' + videoId + '?si=r2MC6NFOzJSwYTMx';
+      }
+    </script>
+{% endblock javascripts %}
