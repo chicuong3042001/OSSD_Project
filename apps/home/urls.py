@@ -30,7 +30,4 @@ urlpatterns = [
     path('facebook-posting', views.facebook_posting, name='facebook-posting'),
     path('get-facebook-init-data', views.getFacebookInitData, name='get-facebook-init-data'),
     path('upload-video', views.uploadVideo, name='upload-video')
-
-    # Matches any html file
-    # re_path(r'^.*\.*', views.pages, name='pages'),
 ]

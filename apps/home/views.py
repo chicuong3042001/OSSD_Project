@@ -34,32 +34,6 @@ def index(request):
 
 
 @login_required(login_url="/login/")
-def pages(request):
-    context = {}
-    # All resource paths end in .html.
-    # Pick out the html file name from the url. And load that template.
-    try:
-
-        load_template = request.path.split('/')[-1]
-
-        if load_template == 'admin':
-            return HttpResponseRedirect(reverse('admin:index'))
-        context['segment'] = load_template
-
-        html_template = loader.get_template('home/' + load_template)
-        return HttpResponse(html_template.render(context, request))
-
-    except template.TemplateDoesNotExist:
-
-        html_template = loader.get_template('home/page-404.html')
-        return HttpResponse(html_template.render(context, request))
-
-    except:
-        html_template = loader.get_template('home/page-500.html')
-        return HttpResponse(html_template.render(context, request))
-
-
-@login_required(login_url="/login/")
 def dashboard(request):
     context = {'facebook': None, 'list_fanpage': None}
     user = User.objects.get(id=request.user.id)
@@ -106,14 +80,14 @@ def dashboard(request):
 def youtube_searching(request):
     return render(request, 'app/youtube-searching.html')
 
-
+@login_required(login_url="/login/")
 def scanYoutubeChannel(request):
     keyword = request.GET.get('keyword')
     scanner = ScanYoutubeChannel(keyword)
     result = scanner.scan()
     return JsonResponse(result)
 
-
+@login_required(login_url="/login/")
 def favoriteChannel(request):
     data = json.loads(json.loads(request.body))
     try:
@@ -139,7 +113,7 @@ def favoriteChannel(request):
 
     return HttpResponse(f"Yêu thích kênh {bookmark.name} thành công")
 
-
+@login_required(login_url="/login/")
 def discoverYoutube(request):
     global youtube_channel
     if 'channel' in request.GET:
@@ -160,7 +134,7 @@ def discoverYoutube(request):
 
     return render(request, 'app/discover-youtube.html', context)
 
-
+@login_required(login_url="/login/")
 def download_video(request):
     if request.method == 'POST' and request.is_ajax():
         link = request.POST.get('url')
@@ -186,7 +160,7 @@ def download_video(request):
 
     return JsonResponse({'success': False})
 
-
+@login_required(login_url="/login/")
 def serve_video(request, filename):
     video_path = os.path.join(settings.MEDIA_ROOT, 'videos', filename)
     if os.path.exists(video_path):
@@ -201,7 +175,7 @@ def serve_video(request, filename):
 def facebook_searching(request):
     return render(request, 'app/facebook-searching.html')
 
-
+@login_required(login_url="/login/")
 def scanFanpageInfo(request):
     keyword = request.GET.get('keyword')
     try:
@@ -213,7 +187,7 @@ def scanFanpageInfo(request):
     result = scanner.scan()
     return HttpResponse(result)
 
-
+@login_required(login_url="/login/")
 def favoriteFanpage(request):
     data = json.loads(json.loads(request.body))
     try:
@@ -240,7 +214,7 @@ def favoriteFanpage(request):
 def bookmark(request):
     return render(request, 'app/bookmark.html')
 
-
+@login_required(login_url="/login/")
 def getListBookmarkFanpage(request):
     try:
         bookmark = serializers.serialize('json', Bookmark.objects.filter(platform='FANPAGE', user_id=request.user.id))
@@ -249,7 +223,7 @@ def getListBookmarkFanpage(request):
 
     return HttpResponse(bookmark)
 
-
+@login_required(login_url="/login/")
 def getListBookmarkYoutubeChannel(request):
     try:
         bookmark = serializers.serialize('json', Bookmark.objects.filter(platform='Youtube', user_id=request.user.id))
@@ -258,21 +232,21 @@ def getListBookmarkYoutubeChannel(request):
 
     return HttpResponse(bookmark)
 
-
+@login_required(login_url="/login/")
 def unfavoriteChannel(request):
     data = json.loads(json.loads(request.body))
     bookmark = Bookmark.objects.get(name=data['_name'])
     bookmark.delete()
     return HttpResponse(f"Bỏ yêu thích kênh {bookmark.name} thành công")
 
-
+@login_required(login_url="/login/")
 def unfavoriteFanpage(request):
     data = json.loads(json.loads(request.body))
     bookmark = Bookmark.objects.get(fanpage_id=data['_fanpageId'])
     bookmark.delete()
     return HttpResponse(f"Bỏ yêu thích fanpage {bookmark.name} thành công")
 
-
+@login_required(login_url="/login/")
 def discoverFacebook(request):
     global fanpage
     if 'fanpage' in request.GET:
@@ -313,7 +287,7 @@ def discoverFacebook(request):
 
     return render(request, 'app/discover-facebook.html', context)
 
-
+@login_required(login_url="/login/")
 def get_post_fanpage(data_post):
     post_fanpage = PostFanpage()
 
@@ -349,7 +323,7 @@ def get_post_fanpage(data_post):
 
     return None
 
-
+@login_required(login_url="/login/")
 def serve_img(request, filename):
     video_path = os.path.join(settings.MEDIA_ROOT, 'apps', 'static', 'assets', 'img', filename)
     if os.path.exists(video_path):
@@ -380,7 +354,7 @@ def facebook_posting(request):
 
     return render(request, 'app/facebook-posting.html', context)
 
-
+@login_required(login_url="/login/")
 def getFacebookInitData(request):
     user = User.objects.get(id=request.user.id)
     facebook = Facebook.objects.get(id=user.facebook.id)
@@ -394,7 +368,7 @@ def getFacebookInitData(request):
 
     return JsonResponse(data_dict)
 
-
+@login_required(login_url="/login/")
 def uploadVideo(request):
     postUpload = json.loads(request.POST.get('postUpload'))
     fanpageData = postUpload.get('fanpage')

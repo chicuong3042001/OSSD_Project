@@ -7,7 +7,6 @@ from apps.home.utils import Utils
 
 
 class UploadAttachment:
-    fanpageIDDelegate = "100092725910650"
     upload_params = {
         'lsd': urllib.parse.quote(Utils.make_id(22)),
         'spin_t': Utils.getSpinT(),
@@ -38,11 +37,7 @@ class UploadAttachment:
         spin_t = UploadAttachment.upload_params.get('spin_t')
         size = fileInfo.get('size')
         payload = f'file_size={size}&file_extension=mp4&target_id={self.fanpage.fanpage_id}&source=composer&composer_dialog_version=&waterfall_id={waterfall_id}&composer_entry_point_ref=biz_web_content_manager_calendar_view&composer_work_shared_draft_mode=&has_file_been_replaced=false&supports_chunking=true&supports_file_api=true&partition_start_offset=0&partition_end_offset={size}&creator_product=2&spherical=false&video_publisher_action_source=&__usid={__usid}&__user={self.facebook.facebook_id}&%20__a=1&__req=10&__hs=19564.BP%3Abizweb_pkg.2.0..0.0&dpr=2&__ccg=EXCELLENT&__rev={self.facebookInitData.revision}&__s={__s}&__hsi={__hsi}&__dyn={self.facebookInitData.get_dyn()}&__csr=&__comet_req=15&fb_dtsg={urllib.parse.quote(self.facebookInitData.fbdtsg)}&jazoest={self.facebookInitData.jazoest}&lsd={lsd}&__spin_r={self.facebookInitData.revision}&__spin_b=trunk&__spin_t={spin_t}&__jssesw=1'
-        # headers = {
-        #     'content-type': 'application/x-www-form-urlencoded',
-        #     'x_fb_video_waterfall_id': waterfall_id,
-        #     'cookie': self.facebook.cookie
-        # }
+
 
         headers = {
             'accept': '*/*',
@@ -50,9 +45,6 @@ class UploadAttachment:
             'content-type': 'application/x-www-form-urlencoded',
             'cookie': self.facebook.cookie,
             'referer': 'https://business.facebook.com/',
-            # 'sec-ch-ua': '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
-            # 'sec-ch-ua-mobile': '?0',
-            # 'sec-ch-ua-platform': '"Windows"',
             'sec-fetch-dest': 'empty',
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-site',
@@ -70,12 +62,7 @@ class UploadAttachment:
             self.facebookInitData = get_facebook_init.task()
         lsd = UploadAttachment.upload_params.get('lsd')
         upload_id = UploadAttachment.upload_params.get('upload_id')
-        # headers = {
-        #     'content-type': 'application/x-www-form-urlencoded',
-        #     'x-fb-lsd': lsd,
-        #     'authority': 'rupload-sin6-2.up.facebook.com',
-        #     'cookie': self.facebook.cookie
-        # }
+
 
         headers = {
             'accept': '*/*',
@@ -84,9 +71,6 @@ class UploadAttachment:
             'authority': 'rupload-sin6-2.up.facebook.com',
             'cookie': self.facebook.cookie,
             'referer': 'https://business.facebook.com/',
-            # 'sec-ch-ua': '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
-            # 'sec-ch-ua-mobile': '?0',
-            # 'sec-ch-ua-platform': '"Windows"',
             'sec-fetch-dest': 'empty',
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-site',
@@ -120,21 +104,6 @@ class UploadAttachment:
             self.facebookInitData = get_facebook_init.task()
 
         url = f'https://rupload-sin6-2.up.facebook.com/fb_video/{upload_id}-0-{end_offset}?__usid={__usid}&__user={self.facebook.facebook_id}&%20__a=1&__req=2l&__hs=19566.BP%3Abizweb_pkg.2.0..0.0&dpr=2&__ccg=EXCELLENT&__rev={self.facebookInitData.revision}&__s={__s}&__hsi={__hsi}&__dyn={self.facebookInitData.get_dyn()}&__csr=&fb_dtsg={urllib.parse.quote(self.facebookInitData.fbdtsg)}&jazoest={self.facebookInitData.jazoest}&lsd={lsd}&__spin_r={self.facebookInitData.revision}&__spin_b=trunk&__spin_t={spin_t}&__jssesw=1'
-        # headers = {
-        #     'authority': 'rupload-sin6-2.up.facebook.com',
-        #     'Content-Length': str(size),
-        #     'Content-Type': 'application/json',
-        #     'composer_session_id': composer_session_id,
-        #     'end_offset': str(end_offset),
-        #     'offset': '0',
-        #     'product_media_id': video_id,
-        #     'x-entity-length': str(size),
-        #     'x-entity-name': fileName,
-        #     'x-entity-type': 'application/octet-stream',
-        #     'x-total-asset-size': str(size),
-        #     'start_offset': '0',
-        #     'cookie': self.facebook.cookie
-        # }
 
         headers = {
             'authority': 'rupload-sin6-2.up.facebook.com',
@@ -148,9 +117,6 @@ class UploadAttachment:
             'offset': '0',
             'product_media_id': video_id,
             'referer': 'https://business.facebook.com/',
-            # 'sec-ch-ua': '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
-            # 'sec-ch-ua-mobile': '?0',
-            # 'sec-ch-ua-platform': '"Windows"',
             'sec-fetch-dest': 'empty',
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-site',
@@ -185,15 +151,6 @@ class UploadAttachment:
         __hsi = urllib.parse.quote("7" + Utils.make_number(20))
         spin_t = UploadAttachment.upload_params.get('spin_t')
 
-        # headers = {
-        #     'authority': 'vupload-edge-business.facebook.com',
-        #     'content-type': 'application/x-www-form-urlencoded',
-        #     'x-asbd-id': '129477',
-        #     'x-fb-lsd': lsd,
-        #     'x_fb_video_waterfall_id': waterfall_id,
-        #     'cookie': self.facebook.cookie
-        # }
-
         headers = {
             'authority': 'vupload-edge-business.facebook.com',
             'accept': '*/*',
@@ -201,9 +158,6 @@ class UploadAttachment:
             'content-type': 'application/x-www-form-urlencoded',
             'cookie': self.facebook.cookie,
             'referer': 'https://business.facebook.com/',
-            # 'sec-ch-ua': '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
-            # 'sec-ch-ua-mobile': '?0',
-            # 'sec-ch-ua-platform': '"Windows"',
             'sec-fetch-dest': 'empty',
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-site',
@@ -214,7 +168,6 @@ class UploadAttachment:
         }
 
         h = urllib.parse.quote(fbuploader.get('h'))
-        # h = urllib.parse.quote("1:NjkxMDA4MDAwMTc2OTQ3NTMzNC5tcDQ=:video/mp4:GKGovAW17SnecJUCAOYuASI9nLFMbugbAAAP:e:1712681800:ARY59u1hjThJCl5P0Ss")
         data = f"fbuploader_video_file_chunk={h}"
 
         url = f"https://vupload-edge-business.facebook.com/ajax/video/upload/requests/receive/?av={self.fanpage.fanpage_id}&video_id={video_id}&start_offset=0&end_offset={size}&source=composer&target_id={self.fanpage.fanpage_id}&waterfall_id={waterfall_id}&composer_entry_point_ref=biz_web_content_manager_calendar_view&composer_work_shared_draft_mode=&composer_dialog_version=&has_file_been_replaced=false&supports_chunking=true&upload_speed=&partition_start_offset=0&partition_end_offset={size}&__usid={__usid}&session_id={session_id}&__user={self.facebook.facebook_id}&__a=1&__req=2l&supports_upload_service=true&__csr=&__hs=19568.BP%3Abizweb_pkg.2.0..0.0&dpr=2&__ccg=EXCELLENT&__rev={self.facebookInitData.revision}&__s={__s}&__hsi={__hsi}&__dyn={self.facebookInitData.get_dyn()}&_csr=&fb_dtsg={urllib.parse.quote(self.facebookInitData.fbdtsg)}&jazoest={self.facebookInitData.jazoest}&lsd={lsd}&__spin_r={self.facebookInitData.revision}&__spin_b=trunk&__spin_t={spin_t}&__jssesw=1"
@@ -229,13 +182,6 @@ class UploadAttachment:
         __hsi = UploadAttachment.upload_params.get('__hsi')
         spin_t = UploadAttachment.upload_params.get('spin_t')
         client_id = Utils.get_logging_interaction_key1()
-        # headers = {
-        #     'content-type': 'application/x-www-form-urlencoded',
-        #     'x-fb-lsd': lsd,
-        #     'X-Asbd-Id': '129477',
-        #     'X-Fb-Friendly-Name': 'ComposerStoryCreateMutation',
-        #     'cookie': self.facebook.cookie
-        # }
 
         headers = {
             'accept': '*/*',
@@ -244,13 +190,6 @@ class UploadAttachment:
             'cookie': self.facebook.cookie,
             'dpr': '1.25',
             'referer': f'https://business.facebook.com/latest/home?asset_id={self.fanpage.fanpage_id}',
-            # 'sec-ch-prefers-color-scheme': 'dark',
-            # 'sec-ch-ua': '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
-            # 'sec-ch-ua-full-version-list': '"Google Chrome";v="123.0.6312.106", "Not:A-Brand";v="8.0.0.0", "Chromium";v="123.0.6312.106"',
-            # 'sec-ch-ua-mobile': '?0',
-            # 'sec-ch-ua-model': '""',
-            # 'sec-ch-ua-platform': '"Windows"',
-            # 'sec-ch-ua-platform-version': '"10.0.0"',
             'sec-fetch-dest': 'empty',
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-origin',
